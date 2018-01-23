@@ -2,8 +2,8 @@
 ///////// 3D drawing basics /////////
 /////////////////////////////////////
 
-
 function main() {
+
 	// Set the scene size
 	const WIDTH = window.innerWidth;
 	const HEIGHT = window.innerHeight;
@@ -14,13 +14,21 @@ function main() {
 	const NEAR = 0.1;
 	const FAR = 10000;
 
+	// array of actors to keep track of spheres
+	var actors = [];
+
 	// get the DOM element to attach to
 	const container = document.querySelector('#container');
 
 	// Sphere Variables
-	const radius = 50;
-	const segments = 8;
-	const rings = 8;
+	var qual = document.getElementById("quality").value;
+	var oldQual = qual;
+
+	var radius = 50;
+	var segments = qual;
+	var rings = qual;
+
+	console.log(qual);
 
 	// Create a WebGL renderer, camera and a scene
 	const renderer = new THREE.WebGLRenderer();
@@ -34,6 +42,8 @@ function main() {
 
 	const scene = new THREE.Scene();
 
+	meshes();
+
 	// add the camera to the scene
 	scene.add(camera);
 
@@ -44,54 +54,6 @@ function main() {
 	container.appendChild(renderer.domElement);
 
 	console.log("done scene");
-
-
-	/////// Sphere ///////
-
-	const sphereColor = 0xCC0000;
-
-	// create the sphere's material
-	const sphereMaterial = 
-		new THREE.MeshLambertMaterial(
-		{
-			color: sphereColor
-		});
-
-	const sphereGeo = new THREE.SphereGeometry(
-			radius,
-			segments,
-			rings);
-
-	// create a new mesh with sphere geometry
-	const sphere = new THREE.Mesh(
-	sphereGeo,
-	sphereMaterial);
-
-	// Move the sphere back in Z so we can see it
-	sphere.position.z = -300;
-	sphere.position.x = -100;
-
-	// Finally add the sphere to the scene
-	scene.add(sphere);
-		
-	console.log("done sphere");
-
-
-	/////// wireframe sphere ///////
-	const wireGeo = new THREE.EdgesGeometry(sphereGeo);
-	
-	const wireMat = new THREE.LineBasicMaterial({
-		color: sphereColor,
-		linewidth: 3
-	});
-
-	const sphereWire = new THREE.LineSegments(wireGeo, wireMat);
-
-	sphereWire.position.z = -300;
-	sphereWire.position.x = 100;
-
-	// add wireframe to the scene
-	scene.add(sphereWire);
 
 	/////// Light ///////
 
@@ -109,6 +71,57 @@ function main() {
 
 	console.log("done lights");
 
+	function meshes() {
+
+		/////// Sphere ///////
+
+		const sphereColor = 0xCC0000;
+
+		// create the sphere's material
+		const sphereMaterial = 
+			new THREE.MeshLambertMaterial(
+			{
+				color: sphereColor
+			});
+
+		const sphereGeo = new THREE.SphereGeometry(
+				radius,
+				segments,
+				rings);
+
+		// create a new mesh with sphere geometry
+		const sphere = new THREE.Mesh(
+			sphereGeo,
+			sphereMaterial);
+
+		// Move the sphere back in Z so we can see it
+		sphere.position.z = -300;
+		sphere.position.x = -100;
+
+		// Finally add the sphere to the scene		
+		scene.add(sphere);
+		actors.push(sphere);
+			
+		console.log("done sphere");
+
+		/////// wireframe sphere ///////
+		const wireGeo = new THREE.EdgesGeometry(sphereGeo);
+		
+		const wireMat = new THREE.LineBasicMaterial({
+			color: sphereColor,
+			linewidth: 3
+		});
+
+		const sphereWire = new THREE.LineSegments(wireGeo, wireMat);
+
+		sphereWire.position.z = -300;
+		sphereWire.position.x = 100;
+
+		// add wireframe to the scene
+		scene.add(sphereWire);
+		actors.push(sphereWire);
+	}
+
 
 	/////// DRAW ///////
 
@@ -118,8 +131,14 @@ function main() {
 		renderer.render(scene, camera);
 
 		// turn spheres
-		turn(sphere);
-		turn(sphereWire);
+		spinActors();
+
+		// check for quality change (must be a better way to do this)
+		qual = document.getElementById("quality").value;
+		if (qual !== oldQual) {
+			changeQuality();
+			oldQual = qual;
+		}
 
 		// schedule nest frame.
 		requestAnimationFrame(update);
@@ -130,8 +149,15 @@ function main() {
 
 	console.log("done draw");
 
+	// spin all actors
+	function spinActors() {
+		for (var i = 0; i < actors.length; ++i) {
+			spin(actors[i]);
+		}
+	}
+
 	// rotate sphere //
-	function turn(mesh) {
+	function spin(mesh) {
 
 		// need to find amount to rotate every frame
 		// want speed of rotSpeed every second @ 60fps
@@ -140,6 +166,17 @@ function main() {
 		var dTheta = radSpeed/60;
 
 		mesh.rotation.y += dTheta;
+	}
+	
+	// change quality
+	function changeQuality() {
+		for (var i = actors.length -1; i >=0 ; --i) {
+			scene.remove(actors.pop());
+			console.log("wowza");
+		}
+		segments = qual;
+		rings = qual;
+		meshes();
 	}
 
 	// window resize
